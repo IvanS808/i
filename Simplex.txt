@@ -1,0 +1,471 @@
+#include <fstream>
+#include <iostream>
+using namespace std;
+double** x, ** y, sum1, sum2, ** simp, * ans;
+int Cstrok1, Cstolbcov1, Cstrok, Cstolbcov;
+void Pr(void) //Чтение данных из файла 
+{
+	ifstream in("input.txt");
+	if (in.is_open())
+	{
+		int count = 0;
+		int temp;
+		while (!in.eof())
+		{
+			in >> temp;
+			count++;
+		}
+		in.seekg(0, ios::beg);
+		in.clear();
+		int count_space = 0;
+		char symbol;
+		while (!in.eof())
+		{
+			in.get(symbol);
+			if (symbol == ' ') count_space++;
+			if (symbol == '\n') break;
+		}
+		in.seekg(0, ios::beg);
+		in.clear();
+		int n = count / (count_space + 1);
+		int m = count_space + 1;
+		Cstrok1 = n;
+		Cstolbcov1 = m;
+		x = new double* [n];
+		for (int i = 0; i < n; i++) x[i] = new double[m];
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < m; j++)
+				in >> x[i][j];
+		in.close();
+	}
+	else
+	{
+		cout << "Файл не найден.";
+	}
+}
+
+void Matrix(void)  //Составление матрицы 
+{
+	int d;
+	Cstrok = Cstrok1 + Cstolbcov1 - 2;
+	Cstolbcov = (Cstrok1 - 1) * (Cstolbcov1 - 1) + 1;
+	if (Cstolbcov1 > Cstrok1)
+		d = Cstolbcov1 - 1;
+	else
+		d = Cstrok1 - 1;
+	for (int i = 0; i < Cstrok1 - 1; i++)
+		sum1 += x[i][Cstolbcov1 - 1];
+	for (int i = 0; i < Cstolbcov1 - 1; i++)
+		sum2 += x[Cstrok1 - 1][i];
+	y = new double* [Cstrok1 + Cstolbcov1 - 2];
+	for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+		y[i] = new double[(Cstrok1 - 1) * (Cstolbcov1 - 1) + 1 + d];
+
+	int t1 = Cstolbcov1 - 1, t2 = 0, t3 = Cstolbcov1 - 1;
+	for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+	{
+		t1 = Cstolbcov1 - 1 - i;
+		for (int j = 0; j < (Cstrok1 - 1) * (Cstolbcov1 - 1) + 1; j++)
+		{
+			if (i < Cstolbcov1 - 1)
+			{
+				if (j < (Cstrok1 - 1) * (Cstolbcov1 - 1))
+				{
+					if ((t1 % (Cstolbcov1 - 1) == 0) && (t1 > 0))
+						y[i][j] = 1;
+					else
+						y[i][j] = 0;
+					t1++;
+				}
+				else
+					y[i][j] = x[Cstrok1 - 1][i];
+			}
+			else
+			{
+				if (j < (Cstrok1 - 1) * (Cstolbcov1 - 1))
+				{
+					if ((j >= t2) && (j < t3))
+						y[i][j] = 1;
+					else
+						y[i][j] = 0;
+				}
+				else
+					y[i][j] = x[i - Cstolbcov1 + 1][Cstolbcov1 - 1];
+			}
+		}
+		if ((i < Cstolbcov1 - 1) == false)
+		{
+			t2 += Cstolbcov1 - 1;
+			t3 += Cstolbcov1 - 1;
+		}
+	}
+	if (sum1 > sum2)
+	{
+		Cstolbcov += Cstrok1 - 1;
+		int c = 0;
+		for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+			y[i][(Cstrok1 - 1) * (Cstolbcov1 - 1) + Cstrok1 - 1] = y[i][(Cstrok1 - 1) * (Cstolbcov1 - 1)];
+		for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+		{
+			for (int j = (Cstrok1 - 1) * (Cstolbcov1 - 1); j < (Cstrok1 - 1) * (Cstolbcov1 - 1) + Cstrok1 - 1; j++)
+			{
+				if (i >= Cstolbcov1 - 1)
+				{
+					if (j == (Cstrok1 - 1) * (Cstolbcov1 - 1) + c)
+						y[i][j] = 1;
+					else
+						y[i][j] = 0;
+				}
+				else
+					y[i][j] = 0;
+			}
+			if (i >= Cstolbcov1 - 1)
+				c++;
+		}
+	}
+	if (sum1 < sum2)
+	{
+		Cstolbcov += Cstolbcov1 - 1;
+		int k = 0;
+		for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+			y[i][(Cstrok1 - 1) * (Cstolbcov1 - 1) + Cstolbcov1 - 1] = y[i][(Cstrok1 - 1) * (Cstolbcov1 - 1)];
+		for (int i = 0; i < Cstrok1 + Cstolbcov1 - 2; i++)
+		{
+			for (int j = (Cstrok1 - 1) * (Cstolbcov1 - 1); j < (Cstrok1 - 1) * (Cstolbcov1 - 1) + Cstolbcov1 - 1; j++)
+			{
+				if (i < Cstolbcov1 - 1)
+				{
+					if (j == (Cstrok1 - 1) * (Cstolbcov1 - 1) + k)
+						y[i][j] = 1;
+					else
+						y[i][j] = 0;
+				}
+				else
+					y[i][j] = 0;
+			}
+			if (i < Cstolbcov1 - 1)
+				k++;
+		}
+	}
+}
+
+
+bool CheckStroka(int stroka) //Есть ли в строке базисная переменная 
+{
+	double sum = 0;
+	bool t = false;
+	for (int i = 0; i < Cstolbcov; i++)
+	{
+		for (int j = 0; j < Cstrok; j++)
+			if (y[j][i] == 0)
+				sum++;
+		if ((sum == Cstrok - 1) && (y[stroka][i] == 1))
+			t = true;
+		sum = 0;
+	}
+	return t;
+
+}
+
+bool CheckStolbec(int a) //Есть ли в столбце базисная переменная
+{
+	int sum = 0;
+	bool t = false;
+	for (int i = 0; i < Cstrok; i++)
+		if (y[i][a] == 0)
+			sum++;
+	for (int i = 0; i < Cstrok; i++)
+		if (y[i][a] == 1)
+			t = true;
+	if ((sum == Cstrok - 1) && (t))
+		return true;
+	else
+		return false;
+}
+
+void Estr(int a, int b) //Приравнивание строк 
+{
+	for (int i = 0; i < Cstolbcov; i++)
+		y[a][i] = y[b][i];
+}
+
+
+
+void Sstr(int a, int b, double k) //Суммирование строк 
+{
+	for (int i = 0; i < Cstolbcov; i++)
+		y[a][i] += y[b][i]*k;
+}
+
+void MinusPlus(void) //Избавление от отрицательных чисел в последнем столбце
+{
+	int* index, cnt = 0, minel = 0, minindex;
+	index = new int[Cstrok];
+	bool t = false;
+	for (int i = 0; i < Cstrok; i++)
+		if (y[i][Cstolbcov - 1] < 0)
+		{
+			index[cnt] = i;
+			cnt++;
+		}
+
+
+	for (int i = 0; i < cnt + 1; i++)
+		if (y[i][Cstolbcov - 1] < minel)
+		{
+			y[i][Cstolbcov - 1] = minel;
+			minindex = i;
+		}
+
+	if (cnt > 1)
+	{
+		for (int i = 0; i < cnt; i++)
+		{
+			if (index[i] == minindex)
+				i++;
+			Sstr(index[i], minindex, -1);
+		}
+
+		for (int i = 0; i < Cstolbcov; i++)
+			y[minindex][i] *= (-1);
+	}
+	else if (cnt == 1)
+		for (int i = 0; i < Cstolbcov; i++)
+			y[index[0]][i] *= (-1);
+
+
+}
+
+void DeleteZstr(void) //Удаление нулевых строк 
+{
+	bool l, b;
+	double s = 0;
+	int index;
+lb1:
+	l = false;
+	for (int i = 0; i < Cstrok; i++)
+	{
+		b = true;
+		for (int j = 0; j < Cstolbcov; j++)
+			if (y[i][j] != 0)
+				b = false;
+		if (b)
+		{
+			l = true;
+			index = i;
+			break;
+		}
+	}
+	if (b)
+	{
+		for (int i = index; i < Cstrok - 1; i++)
+			Estr(i, i + 1);
+		Cstrok--;
+	}
+	if (l)
+		goto lb1;
+}
+
+void Baz(int str, int stl) //Ввод базисной переменной в столбец 
+{
+	for (int i = 0; i < Cstrok; i++)
+	{
+		if ((i == str) && (str == Cstrok - 1))
+			break;
+		if (i == str)
+			i++;
+		if (y[i][stl] != 0)
+			Sstr(i, str, (-1)*(y[i][stl]));
+	}
+}
+
+
+void Bazis(void) //Приведение матрицы к единичному базису 
+{
+	int index;
+	bool t1 = true;
+	double el = 0;
+	int a = Cstolbcov1 - 1, b = 0;
+	if (sum1 > sum2)
+	{
+		for (int i = 0; i < Cstrok1 - 1; i++)
+			Sstr(a + i, b + i,-1);
+	}
+	else if (sum1 < sum2)
+	{
+		for (int i = 0; i < Cstrok1 - 1; i++)
+			Sstr(b + i, a + i,-1);
+	}
+	MinusPlus();
+l1:
+	for (int i = 0; i < Cstrok; i++)
+	{
+		if (CheckStroka(i) == false)
+		{
+			for (int j = 0; j < Cstolbcov; j++)
+				if (y[i][j]!=0)
+				{
+					index = j;
+					break;
+				}
+			for (int v = 0; v < Cstolbcov; v++)
+				y[i][v] /= y[i][index];
+			for (int j = 0; j < Cstrok; j++)
+			{
+				if ((j == i) && (j < Cstrok - 1))
+					j++;
+				else if ((j == Cstrok - 1) && (i == Cstrok - 1))
+					break;
+				if (y[j][index] !=0)
+					Sstr(j, i, (-1)* y[j][index]);
+			}
+		}
+	}
+	MinusPlus();
+	t1 = true;
+	for (int i = 0; i < Cstrok; i++)
+	{
+		t1 = CheckStroka(i);
+		if (t1 == false)
+			goto l1;
+	}
+	DeleteZstr();
+}
+
+
+
+void SimplexM(void) //Симплекс-метод 
+{
+	double* x1, * b, * v, * vv;
+	int* ii, * jj;
+	x1 = new double[Cstolbcov - 1];
+	b = new double[Cstrok];
+	v = new double[Cstolbcov];
+	ii = new int[Cstolbcov];
+	jj = new int[Cstolbcov];
+	vv = new double[Cstolbcov];
+	int cnt = 0, ind;
+	for (int i = 0; i < Cstrok1 - 1; i++)
+		for (int j = 0; j < Cstolbcov1 - 1; j++)
+		{
+			x1[cnt] = x[i][j];
+			cnt++;
+		}
+	if (sum1 != sum2)
+		for (int i = cnt; i < Cstolbcov - 1; i++)
+			x1[i] = 0;
+	cnt = 0;
+	for (int i = 0; i < Cstolbcov - 1; i++)
+		if (CheckStolbec(i))
+		{
+			for (int k = 0; k < Cstrok; k++)
+				if (y[k][i] == 1)
+				{
+					b[k] = x1[i];
+					break;
+				}
+		}
+
+	double tmp;
+	for (int i = 0; i < Cstolbcov - 1; i++)
+	{
+		tmp = 0;
+		for (int j = 0; j < Cstrok; j++)
+			tmp += b[j] * y[j][i];
+		tmp -= x1[i];
+		v[i] = tmp;
+	}
+
+
+	tmp = 0;
+	for (int j = 0; j < Cstrok; j++)
+		tmp += b[j] * y[j][Cstolbcov - 1];
+	v[Cstolbcov - 1] = tmp;
+n:
+	cnt = 0;
+	for (int i = 0; i < Cstolbcov - 1; i++)
+		if (v[i] > 0)
+		{
+			for (int k = 0; k < Cstrok; k++)
+				if (y[k][i] > 0)
+					tmp = y[k][i] * y[k][Cstolbcov - 1];
+			for (int j = 0; j < Cstrok; j++)
+				if (y[j][i] > 0)
+				{
+					if ((tmp >= y[j][Cstolbcov - 1] * y[j][i]) && (y[j][Cstolbcov - 1] * y[j][i]>0))
+					{
+						tmp = y[j][Cstolbcov - 1] * y[j][i];
+						ii[cnt] = j;
+						jj[cnt] = i;
+					}
+				}
+			vv[cnt] = tmp * v[i];
+			cnt++;
+		}
+	bool c = false; 
+	for (int m = 0; m < cnt; m++)
+		if (vv[m] > 0)
+			c = true; 
+	if (c)
+	{
+		tmp = 0;
+		for (int i = 0; i < cnt; i++)
+			if (vv[i] > tmp)
+			{
+				tmp = vv[i];
+				ind = i;
+			}
+		Baz(ii[ind], jj[ind]);
+		b[ii[ind]] = x1[jj[ind]];
+		MinusPlus(); 
+		for (int i = 0; i < Cstolbcov - 1; i++)
+		{
+			tmp = 0;
+			for (int j = 0; j < Cstrok; j++)
+				tmp += b[j] * y[j][i];
+			tmp -= x1[i];
+			v[i] = tmp;
+		}
+		tmp = 0;
+		for (int j = 0; j < Cstrok; j++)
+			tmp += b[j] * y[j][Cstolbcov - 1];
+		v[Cstolbcov - 1] = tmp;
+			
+		
+		for (int i = 0; i < Cstolbcov - 1; i++)
+			if (v[i] > 0)
+				goto n;
+	}
+	ans = new double[Cstolbcov];
+	for (int i = 0; i < Cstolbcov - 1; i++)
+	{
+		if (CheckStolbec(i))
+		{
+			for (int k = 0; k < Cstrok; k++)
+				if (y[k][i] == 1)
+					ans[i] = y[k][Cstolbcov - 1];
+		}
+		else
+			ans[i] = 0;
+	}
+	ans[Cstolbcov - 1] = v[Cstolbcov - 1];
+
+
+}
+
+int main()
+{
+	Pr();
+	Matrix();
+	Bazis();
+	SimplexM(); 
+
+	ofstream fout1;
+	fout1.open("output.txt");
+	for (int i = 0; i < (Cstrok1 - 1) * (Cstolbcov1 - 1); i++)
+		fout1 << "x" << i + 1 << "=" << ans[i] << "\n";
+	fout1 << "Fmin=" << ans[Cstolbcov - 1];
+	fout1.close();
+   return 0;
+}
+
